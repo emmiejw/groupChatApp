@@ -7,11 +7,12 @@
 	<link rel="stylesheet" href="{{ asset('css/app.css') }}">
 	<style>
 		.list-group{
-			overflow-y: scroll hidden;
+			overflow-y: scroll;
 			height: 200px;
 		}
 		body{
 			background-color: azure;
+			border:10px solid white; 
 		}
 	</style>
 </head>
@@ -37,7 +38,7 @@
 								  :key=value.index
 								  :color= chat.color[index]
 								  :user = chat.user[index]
-				
+								  :time = chat.time[index]
 								  >
 									  @{{ value }}
 								  </message>

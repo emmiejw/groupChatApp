@@ -1,7 +1,7 @@
 <template>
     <div>
         <li class="list-group-item" :class="className"><slot></slot>
-        <span id="time">{{  }}</span></li>
+        <span id="time">Sent @ {{ time }}</span></li>
         <small class="badge float-right" :class='badgeClass'>{{ user }}</small>
     </div>
 </template>
@@ -11,6 +11,7 @@
         props:[
             'color',
             'user',
+            'time'
         
         ],
         computed:{
@@ -28,9 +29,9 @@
 </script>
 <style>
     #time{
-        text-align-last: right;
         font-size: 9px;
-        margin-top: 10px;
+        font-weight: 400;
+        margin-left: 85%;
         color: black;
     }
 </style>

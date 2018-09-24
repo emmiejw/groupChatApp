@@ -6,10 +6,10 @@ import Vue from 'vue'
 import VueChatScroll from 'vue-chat-scroll'
 Vue.use(VueChatScroll)
 
-// /// for notifications
-// import Toaster from 'v-toaster'
-// import 'v-toaster/dist/v-toaster.css'
-// Vue.use(Toaster, {timeout: 5000})
+/// for notifications
+import Toaster from 'v-toaster'
+import 'v-toaster/dist/v-toaster.css'
+Vue.use(Toaster, {timeout: 5000})
 
 Vue.component('message', require('./components/message.vue'));
 
@@ -21,7 +21,7 @@ const app = new Vue({
     		message:[],
     		user:[],
     		color:[],
-    		
+    		time:[]
     	},
     	typing:'',
     	numberOfUsers:0
@@ -40,7 +40,7 @@ const app = new Vue({
     			this.chat.message.push(this.message);
     			this.chat.color.push('success');
     			this.chat.user.push('you');
-
+    			this.chat.time.push(this.getTime());
     			axios.post('/send', {
     				message : this.message,
                     chat:this.chat
@@ -53,33 +53,68 @@ const app = new Vue({
     			    console.log(error);
     			  });
     		}
-		}
-	},
-
-
-	watch:{
-		message(){
-			Echo.private('chat')
-    			.whisper('typing', {
-        			name: this.message
-    		});
-		}	
-	},
-	mounted(){
-		Echo.private('chat')
+    	},
+    	getTime(){
+    		let time = new Date();
+    		return time.getHours()+':'+time.getMinutes();
+    	},
+        getOldMessages(){
+            axios.post('/getOldMessage')
+                  .then(response => {
+                    console.log(response);
+                    if (response.data != '') {
+                        this.chat = response.data;
+                    }
+                  })
+                  .catch(error => {
+                    console.log(error);
+                  });
+        },
+        deleteSession(){
+            axios.post('/deleteSession')
+			.then(response=> this.$toaster.success('Chat history is deleted') )
+			window.location.reload(true);
+		
+        }
+    },
+    mounted(){
+        this.getOldMessages();
+    	Echo.private('chat')
     	    .listen('ChatEvent', (e) => {
     	    	this.chat.message.push(e.message);
     	    	this.chat.user.push(e.user);
-				this.chat.color.push('warning');
-				
-			})
-			.listenForWhisper('typing', (e) => {
-				if(e.name != ''){
-					this.typing = 'Typing....'
-				}else{
-					this.typing = ''
-				}
-				
-			});
-	}
+    	    	this.chat.color.push('warning');
+    	    	this.chat.time.push(this.getTime());
+                axios.post('/saveToSession',{
+                    chat : this.chat
+                })
+                      .then(response => {
+                      })
+                      .catch(error => {
+                        console.log(error);
+                      });
+    	        // console.log(e);
+    	    })
+    	    .listenForWhisper('typing', (e) => {
+    	    	if (e.name != '') {
+    	        	this.typing = 'typing...'
+    	    	}else{
+    	    		this.typing = ''
+    	    	}
+    	    })
+
+    	    Echo.join(`chat`)
+    	        .here((users) => {
+    	        	this.numberOfUsers = users.length;
+    	        })
+    	        .joining((user) => {
+    	        	this.numberOfUsers += 1;
+    	        	// console.log(user);
+    	        	this.$toaster.success(user.name+' has joined the group chat room');
+    	        })
+    	        .leaving((user) => {
+    	        	this.numberOfUsers -= 1;
+    	        	this.$toaster.warning(user.name+' is leaved the group chat room');
+    	        });
+    }
 });
